@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
@@ -87,8 +87,20 @@ RUN cd /build && \
     cd /build && \
     rm -rf *
     
-RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/openvas.conf && ldconfig && cd / && rm -rf /build
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+
+COPY --from=builder /usr/local /usr/local
+
+COPY install-pkgs-slim.sh /install-pkgs-slim.sh
+
+RUN bash /install-pkgs-slim.sh
+    
+RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/openvas.conf && ldconfig && cd /
 
 COPY scripts/* /
 
 CMD '/start.sh'
+
